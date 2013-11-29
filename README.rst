@@ -6,7 +6,7 @@ A Trac_ plugin for a macro to display nice configurable graphs of ticket
 statistics on Trac_ wiki pages.
 
 
-- Highly customizable for subsets of tickets in any project with custom fields.
+- Highly customizable for subsets of tickets in any project, even having custom fields.
 - It doesn't have external dependencies.
 - The code is protected against `sql injections`__.
 - Permissions can be set to allow only some users or groups to use the macro.
