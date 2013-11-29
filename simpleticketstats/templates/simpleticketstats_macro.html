@@ -1,0 +1,15 @@
+<h2>$title</h2>
+<div id="$id" class="simpleticketstats"></div>
+<div style="width: ${width}px;font-size: 6px;text-align: right" class="simpleticketstats-legend">
+    Graph <a href="https://github.com/wikical/TracSimpleTicketStatsPlugin">plugin</a> proudly
+    developed by the team of <a href="http://wikical.com">wikical.com</a>
+    <!-- Thanks for keeping these links to our projects! -->
+</div>
+<script type = "text/javascript">
+    this['$id'+'_closedTickets'] = $closedTickets;
+    this['$id'+'_openedTickets'] = $openedTickets;
+    this['$id'+'_reopenedTickets'] = $reopenedTickets;
+    this['$id'+'_openTickets'] = $openTickets;
+    this['$id'+'_width'] = $width;
+    this['$id'+'_height'] = $height;
+</script>
