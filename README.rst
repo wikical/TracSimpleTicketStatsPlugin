@@ -28,16 +28,24 @@ Fixed parameters
 ~~~~~~~~~~~~~~~~
 
 title
-  A title to be displayed above the graph.
+  A title to be displayed above the graph. Default is `Tickets statistics`.
 
 days
-  Number of days from the past (until now) to be displayed.
+  Number of days from the past (until now) to be displayed. Default is `60`.
 
 width
-  Width of the graph in pixels.
+  Width of the graph in pixels. Default is `600`.
 
 height
-  Height of the graph in pixels.
+  Height of the graph in pixels. Default is `400`.
+
+timezone
+  The timezone the data is in the database, possible values are `local` and
+  `utc`. Default is `local`.
+
+All the default values of the above parameters can be also specified in
+`trac.init` as: `default_title`, `default_days`, `default_width`,
+`default_height` and `default_timezone`.
 
 
 Dynamic parameters

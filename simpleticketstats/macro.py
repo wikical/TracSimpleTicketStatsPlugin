@@ -9,6 +9,7 @@
 from datetime import timedelta
 import datetime
 import json
+import math
 import random
 import re
 import string
@@ -20,6 +21,7 @@ from trac.util.html import Markup
 from trac.web.chrome import Chrome, ITemplateProvider, add_javascript
 from trac.wiki.macros import WikiMacroBase, parse_args
 
+from localtimezone import LocalTimeZone
 try:
     from trac.util.datefmt import to_utimestamp as to_timestamp
 except ImportError:
@@ -39,10 +41,10 @@ def _get_args_defaults(env, args):
             _get_config_variable(env, 'default_title', 'Tickets statistics'),
         'days': _get_config_variable(env, 'default_days', '60'),
         'width': _get_config_variable(env, 'default_width', '600'),
-        'height': _get_config_variable(env, 'default_height', '400')}
+        'height': _get_config_variable(env, 'default_height', '400'),
+        'timezone': _get_config_variable(env, 'default_timezone', 'local')}
     defaults.update(args)
     return defaults
-
 
 class SimpleTicketStatsMacro(WikiMacroBase):
 
@@ -76,12 +78,22 @@ class SimpleTicketStatsMacro(WikiMacroBase):
         # args is a tuple with a list of unnamed parameters (which is empty as
         # we don't support them), and a dictionary (named parameters)
         args = _get_args_defaults(formatter.env, args[1])
+        timezone = args.pop('timezone')
+        if timezone == 'utc' :
+            timezone = utc 
+        elif timezone == 'local':
+            timezone = LocalTimeZone()
+        else:
+            raise Exception('parameter "timezone" was either "utc" nor '
+                    '"local", it was: %s' % timezone)
         title = args.pop('title')
         days = int(args.pop('days'))
         width = int(args.pop('width'))
         height = int(args.pop('height'))
         today = datetime.datetime.combine(
-                datetime.date.today(), datetime.time(tzinfo=utc))
+                datetime.date.today(),
+                # last microsecond :-) of today
+                datetime.time(23, 59, 59, 999999, tzinfo=timezone))
         ts_start = to_timestamp(today - timedelta(days=days))
         ts_end = to_timestamp(today)
 
@@ -121,6 +133,13 @@ class SimpleTicketStatsMacro(WikiMacroBase):
             'reopenedTickets': {},
             'openTickets': {}
         }
+
+        # NOTE on casting times: in the sql statements below, we use:
+        #            CAST((time / 86400) AS int) * 86400 AS date
+        # which homogenize all times during a day to the same day. Example:
+        # The following two values will have the same value
+        # 1386280739  (2013-12-05 22:58:59)  ->  2013-12-05 00:00:00
+        # 1386270739  (2013-12-05 20:12:19)  ->  2013-12-05 00:00:00
 
         # number of created tickets for the time period, grouped by day
         # a day has 86400 seconds
@@ -165,7 +184,8 @@ class SimpleTicketStatsMacro(WikiMacroBase):
             series['closedTickets'][float(timestamp*1000)] = float(count)
 
         # calculate number of open tickets for each day
-        # number of open tickets at the end of the reporting period
+        
+        # number of open tickets up to now
         cursor.execute(
             "SELECT COUNT(*) FROM ticket "
             "WHERE {0} {1} status <> 'closed'".format(
@@ -173,11 +193,12 @@ class SimpleTicketStatsMacro(WikiMacroBase):
             tuple(extra_parameters))
         open_tickets = cursor.fetchone()[0]
         series['openTickets'][ts_end * 1000] = open_tickets
-        for day_ms in range(ts_end * 1000, ts_start * 1000, -86400000):
+
+        for day_ms in range(math.floor(ts_end / 86400.0) * 86400000, ts_start * 1000, -86400000):
             open_tickets += series['closedTickets'].get(day_ms, 0)
             open_tickets -= series['openedTickets'].get(day_ms, 0)
             open_tickets -= series['reopenedTickets'].get(day_ms, 0)
-            series['openTickets'][day_ms -86400000] = open_tickets
+            series['openTickets'][day_ms] = open_tickets
 
         # sort all series and put them in data
         for i in series:
