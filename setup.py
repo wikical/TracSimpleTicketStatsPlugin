@@ -15,7 +15,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='TracSimpleTicketStatsPlugin',
-    version='0.1',
+    version='0.2',
     author='Ivan F. Villanueva B.',
     author_email='ivan@wikical.com',
     maintainer='Ivan F. Villanueva B.',
